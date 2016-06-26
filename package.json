@@ -1,0 +1,13 @@
+{
+  "name": "cloudwatchlogs-to-slack",
+  "version": "1.0.0",
+  "description": "For sending logs to slack and filtering them",
+  "keywords": [],
+  "author": "crystaldelta.com",
+  "engines": {
+    "node": ">=0.10"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.4.2"
+  }
+}
