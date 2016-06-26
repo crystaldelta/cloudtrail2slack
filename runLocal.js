@@ -7,6 +7,5 @@ var context = {
   }
 }
 
-//var event = require('./event-folder/cloudwatchlogssmallraw')
-var event = require('./event-folder/bigevents')
+var event = require('./event-folder/describefailure')
 cwlToSlack.handler(event, context)

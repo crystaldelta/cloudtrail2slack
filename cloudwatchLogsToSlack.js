@@ -4,6 +4,9 @@ var https = require('https')
 var util = require('util')
 
 var config = require('./config')
+var ignoreConfig = require('./ignoreConfig')
+// merge ignore into main config at runtime
+for (var attrname in ignoreConfig) { config[attrname] = ignoreConfig[attrname]; }
 
 var cloudWatchLogs = new AWS.CloudWatchLogs({
     apiVersion: '2014-03-28',
@@ -12,7 +15,7 @@ var cloudWatchLogs = new AWS.CloudWatchLogs({
 
 exports.handler = function (event, context) {
 
-    //console.log(event)
+    console.log(event)
 
     var payload = new Buffer(event.awslogs.data, 'base64')
     var result = zlib.gunzipSync(payload)
@@ -43,49 +46,23 @@ exports.handler = function (event, context) {
     }
 
     function postEvents(parsedEvents, callback) {
-
         for(var i = 0; i < parsedEvents.length; i++) {
             try {
-              var message = JSON.parse(parsedEvents[i].message + "}");
-
-              var text = "Event " + message.eventName +
-                        " performed by type " + message.userIdentity.type +
-                        " who is " +  ((message.userIdentity.type === "IAMUser") ? message.userIdentity.userName : message.userIdentity.principalId) +
-                        " via " + message.eventType +
-                        " in region " + message.awsRegion +
-                        " from " + message.sourceIPAddress +
-                        " at " + message.eventTime
-
-              var postData = {
-                  "username": "CloudTrail Logs",
-                  "text": text,
-                  "icon_emoji": ":aws:"
+              var message = {}
+              try {
+                message = JSON.parse(parsedEvents[i].message)
+              } catch(err) {
+                message = JSON.parse(parsedEvents[i].message + "}")
               }
 
-              // override the default WebHook channel if it is provided
-              if(config.slack.channel) {
-                postData.channel = config.slack.channel
-              }
+              console.log('Processing: ', JSON.stringify(message))
 
-              if(config.ignoredEvents.indexOf(message.eventName) > -1) {
-                //console.log("ignoring based on ignoredEvent ", message);
+              if(isIgnoreEvent(message)) {
                 continue;
               }
 
-              if(config.ignoredUsers.indexOf(message.userIdentity.principalId) > -1) {
-                //console.log("ignoring based on user ", message);
-                continue;
-              }
-
-              var ignoreRegexResult = false
-              config.ignoredEventsRegex.forEach(function (regex) {
-                if(regex.test(message.eventName)) {
-                  //console.log("ignoring based on regex ", regex, message)
-                  ignoreRegexResult = true
-                }
-              })
-              if(ignoreRegexResult)
-                continue;
+              var postData = prepareSlackMessage(message)
+              console.log('Posting', postData)
 
               var options = {
                   method: 'POST',
@@ -115,6 +92,63 @@ exports.handler = function (event, context) {
                 return callback(err)
             }
         }
+    }
+
+    /*
+     * Prepares and formats the slack message and returns the correct Slack structure as per https://api.slack.com/incoming-webhooks
+     */
+    function prepareSlackMessage(message) {
+      var text = "Event " + message.eventName +
+                " performed by type " + message.userIdentity.type +
+                " who is " +  ((message.userIdentity.type === "IAMUser") ? message.userIdentity.userName : message.userIdentity.principalId) +
+                " via " + message.eventType +
+                " in region " + message.awsRegion +
+                " from " + message.sourceIPAddress +
+                " at " + message.eventTime
+
+      var postData = {
+          "username": "CloudTrail Logs",
+          "text": text,
+          "icon_emoji": ":aws:"
+      }
+
+      // override the default WebHook channel if it is provided
+      if(config.slack.channel) {
+        postData.channel = config.slack.channel
+      }
+
+      return postData
+    }
+
+    /*
+     * Based on the config provided, this will determine if this event should be sent to Slack or ignored
+     */
+    function isIgnoreEvent(message) {
+
+      if(config.ignoredEvents.indexOf(message.eventName) > -1) {
+        console.log(message.eventName, " being ignoring based on ignoredEvent ")
+        return true
+      }
+
+      if(config.ignoredUsers.indexOf(message.userIdentity.principalId) > -1) {
+        console.log("ignoring based on user ", message);
+        return true
+      }
+
+      var ignoreRegexResult = false
+      config.ignoredEventsRegex.forEach(function (regex) {
+        if(regex.test(message.eventName)) {
+          console.log(message.eventName + ' did match regex ' + regex + ' so this event is ignored')
+          ignoreRegexResult = true
+        } else {
+          console.log(message.eventName + ' did not match regex ' + regex)
+        }
+      })
+      if(ignoreRegexResult === true) {
+        return true
+      }
+
+      return false
     }
 
 }
