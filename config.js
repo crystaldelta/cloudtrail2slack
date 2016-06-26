@@ -9,4 +9,3 @@ module.exports = {
     region: 'ap-northeast-1'
   }
 }
-

@@ -1,4 +1,4 @@
-var cwlToSlack = require('./cloudwatchLogsToSlack')
+var cwlToSlack = require('./cloudtrail2slack')
 
 // simple emulation of lambda context
 var context = {
@@ -7,5 +7,5 @@ var context = {
   }
 }
 
-var event = require('./event-folder/describefailure')
+var event = require('./event-folder/example')
 cwlToSlack.handler(event, context)

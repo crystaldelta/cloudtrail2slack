@@ -2,7 +2,7 @@ module.exports = {
   ignoredEvents: [
     "CheckMfa",
     "LookupEvents",
-    //"ConsoleLogin",
+    "ConsoleLogin",
     "CreateLogStream"
   ],
 
@@ -13,5 +13,4 @@ module.exports = {
   ],
 
   ignoredUsers: []
-
 }
