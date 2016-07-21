@@ -2,6 +2,9 @@
 
 Handles sending CloudTrail events that you are interested in to Slack. This reads from CloudWatch Logs (vs SNS+S3).
 
+Similar to
+https://github.com/auth0/cloudtrail-slack
+
 ### Installation
 
 1. Modify config.js with the settings you would like

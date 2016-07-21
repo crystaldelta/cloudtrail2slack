@@ -5,17 +5,15 @@ var util = require('util')
 
 var config = require('./config')
 var ignoreConfig = require('./ignoreConfig')
-// merge ignore into main config at runtime
-for (var attrname in ignoreConfig) { config[attrname] = ignoreConfig[attrname]; }
 
-var cloudWatchLogs = new AWS.CloudWatchLogs({
-    apiVersion: '2014-03-28',
-    region: config.cloudwatchlogs.region
-})
+// merge ignore into main config at runtime
+for (var attrname in ignoreConfig) { config[attrname] = ignoreConfig[attrname] }
 
 exports.handler = function (event, context) {
 
-    console.log(event)
+    var logger = getLogger()
+
+    logger.info(event)
 
     var payload = new Buffer(event.awslogs.data, 'base64')
     var result = zlib.gunzipSync(payload)
@@ -27,10 +25,10 @@ exports.handler = function (event, context) {
 
     postEvents(parsedEvents, function(err) {
       if(err) {
-        console.error(err)
+        logger.error(err)
         return context.done(err)
       }
-      console.log('all done')
+      logger.info('all done')
       return context.done(null)
     })
 
@@ -55,40 +53,40 @@ exports.handler = function (event, context) {
                 message = JSON.parse(parsedEvents[i].message + "}")
               }
 
-              console.log('Processing: ', JSON.stringify(message))
+              logger.info('Processing: ', JSON.stringify(message))
 
               if(isIgnoreEvent(message)) {
-                continue;
+                continue
               }
 
               var postData = prepareSlackMessage(message)
-              console.log('Posting', postData)
+              logger.info('Posting', postData)
 
               var options = {
                   method: 'POST',
                   hostname: 'hooks.slack.com',
                   port: 443,
                   path: config.slack.path
-              };
+              }
 
               var req = https.request(options, function(res) {
-                res.setEncoding('utf8');
+                res.setEncoding('utf8')
                 res.on('end', () => {
                   return callback()
                 })
-              });
+              })
 
               req.on('error', function(e) {
-                console.error('problem with request: ' + e.message);
+                logger.error('problem with request: ' + e.message)
                 return callback(e)
-              });
+              })
 
-              req.write(util.format("%j", postData));
-              req.end();
+              req.write(util.format("%j", postData))
+              req.end()
 
             } catch(err) {
-                console.error('Error: ', err);
-                console.error('Message: ', parsedEvents[i])
+                logger.error('Error: ', err)
+                logger.error('Message: ', parsedEvents[i])
                 return callback(err)
             }
         }
@@ -108,8 +106,7 @@ exports.handler = function (event, context) {
 
       var postData = {
           "username": "CloudTrail Logs",
-          "text": text,
-          "icon_emoji": ":aws:"
+          "text": text
       }
 
       // override the default WebHook channel if it is provided
@@ -126,22 +123,22 @@ exports.handler = function (event, context) {
     function isIgnoreEvent(message) {
 
       if(config.ignoredEvents.indexOf(message.eventName) > -1) {
-        console.log(message.eventName, " being ignoring based on ignoredEvent ")
+        logger.debug(message.eventName, " being ignoring based on ignoredEvent ")
         return true
       }
 
       if(config.ignoredUsers.indexOf(message.userIdentity.principalId) > -1) {
-        console.log("ignoring based on user ", message);
+        logger.debug("ignoring based on user ", message)
         return true
       }
 
       var ignoreRegexResult = false
       config.ignoredEventsRegex.forEach(function (regex) {
         if(regex.test(message.eventName)) {
-          console.log(message.eventName + ' did match regex ' + regex + ' so this event is ignored')
+          logger.debug(message.eventName + ' did match regex ' + regex + ' so this event is ignored')
           ignoreRegexResult = true
         } else {
-          console.log(message.eventName + ' did not match regex ' + regex)
+          logger.debug(message.eventName + ' did not match regex ' + regex)
         }
       })
       if(ignoreRegexResult === true) {
@@ -150,5 +147,28 @@ exports.handler = function (event, context) {
 
       return false
     }
+
+    // will convert to bunyan
+    function getDevLogger() {
+      return {
+        silly: console.log,
+        debug: console.log,
+        info: console.log,
+        warn: console.log,
+        error: console.error
+      }
+    }
+
+    // will convert to bunyan
+    function getLogger() {
+      return {
+        silly: function(){},
+        debug: function(){},
+        info: console.log,
+        warn: console.log,
+        error: console.error
+      }
+    }
+
 
 }
