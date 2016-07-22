@@ -3,8 +3,8 @@ var zlib = require('zlib')
 var https = require('https')
 var util = require('util')
 
-var config = require('./config')
-var ignoreConfig = require('./ignoreConfig')
+var config = require('./config/config')
+var ignoreConfig = require('./config/ignoreConfig')
 
 // merge ignore into main config at runtime
 for (var attrname in ignoreConfig) { config[attrname] = ignoreConfig[attrname] }
