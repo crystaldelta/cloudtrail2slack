@@ -1,9 +1,9 @@
 module.exports = {
   ignoredEvents: [
-    "CheckMfa",
-    "LookupEvents",
-    "ConsoleLogin",
-    "CreateLogStream"
+    'CheckMfa',
+    'LookupEvents',
+    'ConsoleLogin',
+    'CreateLogStream'
   ],
 
   ignoredEventsRegex: [

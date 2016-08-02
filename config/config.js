@@ -1,7 +1,6 @@
 module.exports = {
-
   slack: {
     path: '/services/xxxxxxxx',
-    channel: "#test-channel"
+    channel: '#test-channel'
   }
 }

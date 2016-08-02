@@ -7,7 +7,14 @@
   "engines": {
     "node": ">=0.10"
   },
+  "scripts": {
+    "pretest": "standard | snazzy"
+  },
   "dependencies": {
     "aws-sdk": "^2.4.2"
+  },
+  "devDependencies": {
+    "snazzy": "^4.0.0",
+    "standard": "^7.1.2"
   }
 }
