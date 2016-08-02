@@ -7,6 +7,6 @@ var context = {
   }
 }
 
-//var event = require('./event-folder/example')
+// var event = require('./event-folder/example')
 var event = require('./event-folder/ignoredAndNotIgnored')
 cwlToSlack.handler(event, context)
