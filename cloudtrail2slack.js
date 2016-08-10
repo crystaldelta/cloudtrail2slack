@@ -2,6 +2,8 @@ var zlib = require('zlib')
 var https = require('https')
 var util = require('util')
 
+var botkit = require('botkit')
+
 var config = require('./config/config')
 var ignoreConfig = require('./config/ignoreConfig')
 
@@ -23,13 +25,30 @@ exports.handler = function (event, context) {
     return parseEvent(logEvent, resultParsed.logGroup, resultParsed.logStream)
   })
 
-  postEvents(parsedEvents, function (err) {
+  var controller = botkit.slackbot({
+    debug: false
+  })
+
+  var bot = controller.spawn({
+    token: config.slack.token
+  })
+
+  bot.startRTM(function (err, bot, payload) {
     if (err) {
       logger.error(err)
       return context.done(err)
     }
-    logger.info('all done')
-    return context.done(null)
+
+    postEvents(parsedEvents, function (err) {
+      if (err) {
+        logger.error(err)
+        return context.done(err)
+      }
+
+      logger.info('all done')
+      bot.destroy()
+      return context.done(null)
+    })
   })
 
   // converts the event to a valid JSON object with the sufficient infomation required
@@ -60,51 +79,33 @@ exports.handler = function (event, context) {
         }
 
         var postData = prepareSlackMessage(message)
+
         logger.info('Posting', postData)
 
-        var options = {
-          method: 'POST',
-          hostname: 'hooks.slack.com',
-          port: 443,
-          path: config.slack.path
-        }
-
-        var req = https.request(options, function (res) {
-          res.setEncoding('utf8')
-          res.on('end', () => {
-            return callback()
-          })
-        })
-
-        req.on('error', function (e) {
-          logger.error('problem with request: ' + e.message)
-          return callback(e)
-        })
-
-        req.write(util.format('%j', postData))
-        req.end()
+        bot.say(postData)
       } catch (err) {
         logger.error('Error: ', err)
         logger.error('Message: ', parsedEvents[i])
         return callback(err)
       }
     }
+    return callback()
   }
 
   /*
    * Prepares and formats the slack message and returns the correct Slack structure as per https://api.slack.com/incoming-webhooks
    */
   function prepareSlackMessage (message) {
-    var text = 'Event ' + message.eventName +
-              ' performed by type ' + message.userIdentity.type +
-              ' who is ' + ((message.userIdentity.type === 'IAMUser') ? message.userIdentity.userName : message.userIdentity.principalId) +
-              ' via ' + message.eventType +
-              ' in region ' + message.awsRegion +
-              ' from ' + message.sourceIPAddress +
-              ' at ' + message.eventTime
+    var text = 'Event *' + message.eventName + '*' +
+              ' performed by type *' + message.userIdentity.type + '*' +
+              ' who is *' + ((message.userIdentity.type === 'IAMUser') ? message.userIdentity.userName : message.userIdentity.principalId) + '*' +
+              ' via *' + message.eventType + '*' +
+              ' in region *' + message.awsRegion + '*' +
+              ' from *' + message.sourceIPAddress + '*' +
+              ' at *' + message.eventTime + '*'
 
     var postData = {
-      'username': 'CloudTrail Logs',
+      'username': config.slack.name,
       'text': text
     }
 

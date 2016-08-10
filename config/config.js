@@ -1,6 +1,7 @@
 module.exports = {
   slack: {
-    path: '/services/xxxxxxxx',
-    channel: '#test-channel'
+    name: 'CloudTrail Logs',
+    token: '<token>',
+    channel: '<channel>'
   }
 }
