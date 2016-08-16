@@ -1,9 +1,16 @@
 module.exports = {
   ignoredEvents: [
+    'BatchCheckLayerAvailability',
     'CheckMfa',
-    'LookupEvents',
     'ConsoleLogin',
-    'CreateLogStream'
+    'CreateLogStream',
+    'DiscoverPollEndpoint',
+    'Decrypt',
+    'LookupEvents',
+    'SubmitContainerStateChange',
+    'SubmitTaskStateChange',
+    'TestMetricFilter',
+    'UploadLayerPart'
   ],
 
   ignoredEventsRegex: [

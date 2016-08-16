@@ -1,6 +1,4 @@
 var zlib = require('zlib')
-var https = require('https')
-var util = require('util')
 
 var botkit = require('botkit')
 
@@ -75,12 +73,13 @@ exports.handler = function (event, context) {
         logger.info('Processing: ', JSON.stringify(message))
 
         if (isIgnoreEvent(message)) {
+          logger.info('Ingoring that one :)')
           continue
         }
 
         var postData = prepareSlackMessage(message)
 
-        logger.info('Posting', postData)
+        logger.info('Posting', JSON.stringify(postData))
 
         bot.say(postData)
       } catch (err) {
