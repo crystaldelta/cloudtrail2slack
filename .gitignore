@@ -28,3 +28,5 @@ dump.rdb
 *.pyc
 
 .DS_Store
+
+cloudtrail2slack.zip

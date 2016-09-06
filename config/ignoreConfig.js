@@ -19,5 +19,10 @@ module.exports = {
     /Describe.*/
   ],
 
-  ignoredUsers: []
+  ignoredUsers: [],
+
+  ignoredErrorCodes: [
+    'ResourceNotFoundException',
+    'ValidationException'
+  ]
 }
