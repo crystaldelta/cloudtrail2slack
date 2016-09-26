@@ -144,7 +144,7 @@ exports.handler = function (event, context) {
 
       var requestDetails = JSON.stringify(message.requestParameters).trim()
       var requestDetailsLength = requestDetails.length > MAX_REQUEST_DETAIL ? MAX_REQUEST_DETAIL : requestDetails.length
-      text += '\n_Request Params_ => ```' + requestDetails.substring(0, requestDetailsLength) + '```'
+      text += '\n>_Request Params_ => ```' + requestDetails.substring(0, requestDetailsLength) + '```'
       if (requestDetailsLength < requestDetails.length) {
         text += '\n (truncated details)'
       }

@@ -1,5 +1,6 @@
 module.exports = {
   ignoredEvents: [
+    'AssumeRoleWithWebIdentity',
     'BatchCheckLayerAvailability',
     'CheckMfa',
     'ConsoleLogin',

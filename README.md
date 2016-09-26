@@ -28,11 +28,17 @@ node runLocal.js
 
 ```
 # Prepare code zip file
-rm cloudtrail2slack.zip
-zip -rq cloudtrail2slack.zip .
+rm cloudtrail2slack.zip; zip -rq cloudtrail2slack.zip .
 
 # create it
-aws lambda create-function --function-name Cloudtrail2Slack --runtime nodejs4.3 --role xxxx --handler Cloudtrail2Slack.handler --zip-file file://cloudtrail2slack.zip --profile xxxx --timeout 30 --memory-size 256
+aws lambda create-function --function-name Cloudtrail2Slack --runtime nodejs4.3 --role arn:aws:iam::xxxxxx:role/lambda_basic_execution --handler cloudtrail2slack.handler --zip-file fileb://cloudtrail2slack.zip --timeout 45 --memory-size 128
+
+# update the created function to enable CloudWatch Logs triggers
+# example filter
+{ ($.eventName != "Describe*") &&  ($.eventName != "List*") && ($.eventName != "Get*") && ($.eventName != "Discover*")  && ($.eventName != "BatchCheckLayerAvailability") && ($.eventName != "AssumeRoleWithWebIdentity") }
+
+# note that this filter can significantly cut the number of lambda invocations compared with using ignoreConfig.js values
+# ignoreConfig.js can be used for non-bulk operations or for more complex items
 
 # update it
 aws lambda update-function-code  --function-name Cloudtrail2Slack --zip-file fileb://cloudtrail2slack.zip
