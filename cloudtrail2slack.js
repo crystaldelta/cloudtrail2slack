@@ -28,7 +28,8 @@ exports.handler = function (event, context) {
   logger.debug('Creating slackbot')
 
   var controller = botkit.slackbot({
-    debug: true
+    debug: false,
+    log: false
   })
 
   logger.debug('Spawning controller')
@@ -153,7 +154,8 @@ exports.handler = function (event, context) {
     var postData = {
       'username': config.slack.name,
       'text': text,
-      attachments: attachments
+      attachments: attachments,
+      icon_emoji: ':cloudtrail:'
     }
 
     // override the default WebHook channel if it is provided
@@ -178,26 +180,39 @@ exports.handler = function (event, context) {
       return true
     }
 
-    if (config.ignoredUsers.indexOf(message.userIdentity.principalId) > -1) {
+    if (config.ignoredUsers.indexOf(message.userIdentity.userName) > -1 || config.ignoredUsers.indexOf(message.userIdentity.principalId) > -1) {
       logger.debug('ignoring based on user ', message)
       return true
     }
 
-    var ignoreRegexResult = false
+    var ignoreEvent = false
     config.ignoredEventsRegex.forEach(function (regex) {
       if (regex.test(message.eventName)) {
         logger.debug(message.eventName + ' did match regex ' + regex + ' so this event is ignored')
-        ignoreRegexResult = true
+        ignoreEvent = true
       } else {
         logger.debug(message.eventName + ' did not match regex ' + regex)
       }
     })
 
-    if (ignoreRegexResult === true) {
-      return true
-    }
+    config.compoundIgnores.forEach(function (compoundIgnore) {
+      // TODO should really make this flexible (ie can replace all events with 'compoundable events' with optional
+      // parts)
+      if (compoundIgnore.eventName === message.eventName &&
+          (compoundIgnore.user === message.userIdentity.userName || compoundIgnore.user === message.userIdentity.principalId) &&
+          compoundIgnore.errorCode === message.errorCode) {
+        logger.debug(message.eventName + ',' +
+                    ((message.userIdentity.type === 'IAMUser') ? message.userIdentity.userName : message.userIdentity.principalId) + ',' +
+                    message.errorCode + ' did match regex and user for compoundIgnore ' + JSON.stringify(compoundIgnore))
+        ignoreEvent = true
+      } else {
+        logger.debug(message.eventName + ',' +
+                    ((message.userIdentity.type === 'IAMUser') ? message.userIdentity.userName : message.userIdentity.principalId) + ',' +
+                    message.errorCode + ' did not match compoundIgnore ' + JSON.stringify(compoundIgnore))
+      }
+    })
 
-    return false
+    return ignoreEvent
   }
 
   // will convert to bunyan

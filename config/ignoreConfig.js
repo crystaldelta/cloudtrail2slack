@@ -2,11 +2,13 @@ module.exports = {
   ignoredEvents: [
     'AssumeRoleWithWebIdentity',
     'BatchCheckLayerAvailability',
+    'BatchGetImage',
     'CheckMfa',
     'ConsoleLogin',
     'CreateLogStream',
     'DiscoverPollEndpoint',
     'Decrypt',
+    'InitiateLayerUpload',
     'LookupEvents',
     'SubmitContainerStateChange',
     'SubmitTaskStateChange',
@@ -25,5 +27,18 @@ module.exports = {
   ignoredErrorCodes: [
     'ResourceNotFoundException',
     'ValidationException'
+  ],
+
+  compoundIgnores: [
+    {
+      eventName: 'CreateTable',
+      user: 'bob',
+      errorCode: 'ResourceInUseException'
+    },
+    {
+      eventName: 'CreateLogGroup',
+      user: 'bob',
+      errorCode: 'ResourceAlreadyExistsException'
+    }
   ]
 }
